@@ -127,9 +127,11 @@ run_status() {
   local ERASE=""
   if (( ! once )); then
     ERASE=$'\e[K'
-    trap 'printf "\e[?25h\e[0m\n"; trap - INT TERM EXIT; return 0' INT TERM
-    trap 'printf "\e[?25h\e[0m"' EXIT
-    printf '\e[?25l'
+    # alternate screen buffer (like top/htop): no scrollback pollution, no scroll-jump,
+    # and quitting restores exactly what was on the terminal before
+    trap 'printf "\e[?1049l\e[?25h\e[0m"; trap - INT TERM EXIT; return 0' INT TERM
+    trap 'printf "\e[?1049l\e[?25h\e[0m"' EXIT
+    printf '\e[?1049h\e[2J\e[?25l'
   fi
 
   while true; do
@@ -289,38 +291,43 @@ run_status() {
     local mole_x=$(( (two_col ? COLW * 2 + 2 : COLW) - 16 - off * 3 ))
     (( mole_x < 0 )) && mole_x=0
 
-    local FRAME=""
-    FRAME+="${C_BOLD}${C_MAGENTA}Mole${C_RESET}  Health $dot ${C_BOLD}$score${C_RESET} $label  ${C_DIM}$host · $cpu_model · $(human_size $(( ram_total_kb * 1024 ))) RAM${gpu_name:+ · ${gpu_name#NVIDIA }}${C_RESET}$ERASE"$'\n'
-    FRAME+="$(printf '%*s' "$mole_x" '')${C_YELLOW}$MOLE_L1${C_RESET}$ERASE"$'\n'
-    FRAME+="$(printf '%*s' "$mole_x" '')${C_YELLOW}$MOLE_L2${C_RESET}$ERASE"$'\n'
-    FRAME+="$(printf '%*s' "$mole_x" '')${C_YELLOW}$MOLE_L3${C_RESET}$ERASE"$'\n'
+    local -a FL=()
+    FL+=("${C_BOLD}${C_MAGENTA}Mole${C_RESET}  Health $dot ${C_BOLD}$score${C_RESET} $label  ${C_DIM}$host · $cpu_model · $(human_size $(( ram_total_kb * 1024 ))) RAM${gpu_name:+ · ${gpu_name#NVIDIA }}${C_RESET}")
+    FL+=("$(printf '%*s' "$mole_x" '')${C_YELLOW}$MOLE_L1${C_RESET}")
+    FL+=("$(printf '%*s' "$mole_x" '')${C_YELLOW}$MOLE_L2${C_RESET}")
+    FL+=("$(printf '%*s' "$mole_x" '')${C_YELLOW}$MOLE_L3${C_RESET}")
 
     if (( two_col )); then
       for pair in "P_CPU P_MEM" "P_DISK P_PWR" "P_PROC P_NET"; do
         set -- $pair
         local -n _l=$1 _r2=$2
         for (( r = 0; r < ${#_l[@]}; r++ )); do
-          FRAME+="$(_pad "${_l[$r]}" $COLW)  ${_r2[$r]}$ERASE"$'\n'
+          FL+=("$(_pad "${_l[$r]}" $COLW)  ${_r2[$r]}")
         done
-        FRAME+="$ERASE"$'\n'
+        FL+=("")
       done
     else
-      local -a all=("${P_CPU[@]}" "" "${P_MEM[@]}" "" "${P_DISK[@]}" "" "${P_PWR[@]}" "" "${P_PROC[@]}" "" "${P_NET[@]}")
-      for line in "${all[@]}"; do FRAME+="$line$ERASE"$'\n'; done
+      FL+=("${P_CPU[@]}" "" "${P_MEM[@]}" "" "${P_DISK[@]}" "" "${P_PWR[@]}" "" "${P_PROC[@]}" "" "${P_NET[@]}")
     fi
 
     if (( once )); then
-      printf '%s' "$FRAME"
+      printf '%s\n' "${FL[@]}"
       break
     fi
-    FRAME+="${C_DIM}refreshing every ${interval}s — press q to quit${C_RESET}$ERASE"
+    FL+=("${C_DIM}live · every ${interval}s · q quits${C_RESET}")
+
+    # never print more lines than the window has, or every frame scrolls (= visible "refresh")
+    local rows; rows=$(tput lines 2>/dev/null || echo 24)
+    (( ${#FL[@]} > rows - 1 )) && FL=("${FL[@]:0:rows-1}")
+    local FRAME
+    printf -v FRAME "%s$ERASE\n" "${FL[@]}"
     printf '\e[H%s\e[0J' "$FRAME"
     first=0
     tick=$(( tick + 1 ))
   done
 
   if (( ! once )); then
-    printf '\e[?25h\e[0m\n'
+    printf '\e[?1049l\e[?25h\e[0m'
     trap - INT TERM EXIT
   fi
 }
