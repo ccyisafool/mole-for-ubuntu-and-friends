@@ -6,8 +6,22 @@ Pure Bash — no dependencies beyond a stock Ubuntu install.
 
 ## Install
 
+One-liner (downloads to `~/.local/share/mole-ubuntu`, links `mo` into `~/.local/bin`):
+
 ```bash
-./install.sh            # symlinks mo into ~/.local/bin
+curl -fsSL https://raw.githubusercontent.com/ccyisafool/mole_ubuntu/main/install.sh | bash
+```
+
+Or from a clone (symlinks the checkout, so edits take effect immediately):
+
+```bash
+git clone https://github.com/ccyisafool/mole_ubuntu.git && cd mole_ubuntu
+./install.sh
+```
+
+Update: re-run the one-liner. Uninstall: `install.sh --uninstall`. Then:
+
+```bash
 mo --help
 ```
 
