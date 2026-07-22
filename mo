@@ -20,6 +20,7 @@ ${C_BOLD}Commands:${C_RESET}
   status      Live dashboard: CPU, memory, disk, network, battery
   purge       Delete build artifacts (node_modules, target, __pycache__, ...)
   installer   Find and remove leftover installer files (.deb, .iso, .run, ...)
+  update      Update mole itself to the latest version (--check to only look)
 
 ${C_BOLD}Global options:${C_RESET}
   -n, --dry-run    Preview everything, delete nothing
@@ -61,7 +62,7 @@ if [[ -z $CMD ]]; then
 fi
 
 case "$CMD" in
-  clean|uninstall|optimize|analyze|status|purge|installer)
+  clean|uninstall|optimize|analyze|status|purge|installer|update)
     # shellcheck disable=SC1090
     source "$MOLE_HOME/cmd/$CMD.sh"
     "run_$CMD" "${ARGS[@]}"

@@ -19,7 +19,7 @@ git clone https://github.com/ccyisafool/mole_ubuntu.git && cd mole_ubuntu
 ./install.sh
 ```
 
-Update: re-run the one-liner. Uninstall: `install.sh --uninstall`. Then:
+Update any time with `mo update`. Uninstall: `install.sh --uninstall`. Then:
 
 ```bash
 mo --help
@@ -36,6 +36,7 @@ mo --help
 | `mo status`    | Live dashboard: CPU, memory, disk, network rates, temperature, battery, top processes |
 | `mo purge`     | Find & delete build artifacts: `node_modules`, Rust `target`, `__pycache__`, `.pytest_cache`, `.mypy_cache`, `.tox`, `.next`, Gradle `build` |
 | `mo installer` | Find leftover installers (`.deb`, `.iso`, `.run`, `.AppImage`, …) in Downloads/Desktop and offer removal |
+| `mo update`    | Update mole itself (`--check` to only compare versions)                      |
 
 ## Global options
 
