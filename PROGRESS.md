@@ -5,6 +5,8 @@
 > 2. Claim a task by setting its status to `IN PROGRESS (<agent/session note>)` before editing.
 > 3. Set it to `DONE` only after `bash -n` passes and a dry-run smoke test ran.
 > 4. Log anything surprising in the Notes section at the bottom — don't silently work around it.
+> 5. **Every change (and every read-only investigation) must be recorded in `logs.md`** — timestamp,
+>    agent/session, what was done, what changed — and committed together with the change itself.
 
 ## Project
 
