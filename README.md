@@ -4,6 +4,8 @@ A terminal utility for Ubuntu inspired by [tw93/mole](https://github.com/tw93/mo
 system cleaning, app uninstalling, disk analysis and live monitoring in one `mo` command.
 Pure Bash — no dependencies beyond a stock Ubuntu install.
 
+![mo in action: launcher menu and live status dashboard](demo.gif)
+
 ## Install
 
 One-liner (downloads to `~/.local/share/mole-ubuntu`, links `mo` into `~/.local/bin`):

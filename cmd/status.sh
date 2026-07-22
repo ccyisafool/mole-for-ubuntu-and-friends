@@ -312,7 +312,12 @@ run_status() {
     local mole_x=$MOLE_X
 
     local -a FL=()
-    FL+=("${C_BOLD}${C_MAGENTA}Mole${C_RESET}  Health $dot ${C_BOLD}$score${C_RESET} $label  ${C_DIM}$host · $cpu_model · $(human_size $(( ram_total_kb * 1024 ))) RAM${gpu_name:+ · ${gpu_name#NVIDIA }}${C_RESET}")
+    # clip hardware info to the window: a wrapped header shifts every row down
+    # one and strands a stale mole line the animation ticks never repaint
+    local hw="$host · $cpu_model · $(human_size $(( ram_total_kb * 1024 ))) RAM${gpu_name:+ · ${gpu_name#NVIDIA }}"
+    local hw_max=$(( cols - 31 ))
+    (( hw_max < 0 )) && hw_max=0
+    FL+=("${C_BOLD}${C_MAGENTA}Mole${C_RESET}  Health $dot ${C_BOLD}$score${C_RESET} $label  ${C_DIM}${hw:0:hw_max}${C_RESET}")
     FL+=("$(printf '%*s' "$mole_x" '')${C_YELLOW}$MOLE_L1${C_RESET}")
     FL+=("$(printf '%*s' "$mole_x" '')${C_YELLOW}$MOLE_L2${C_RESET}")
     FL+=("$(printf '%*s' "$mole_x" '')${C_YELLOW}$MOLE_L3${C_RESET}")
