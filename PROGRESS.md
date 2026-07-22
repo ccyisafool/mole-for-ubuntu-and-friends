@@ -65,3 +65,9 @@ system commands through `run_root`/`run_user` (dry-run aware). Never call `rm`/`
   non-tty, `installer -n` (found real .debs in ~/Downloads), `optimize -n`, `uninstall firefox`
   non-tty (safe cancel). Not yet exercised for real: actual deletion paths, snap/flatpak removal,
   interactive pickers, live `status` loop.
+- (2026-07-22, later) All of the above since exercised: real deletions (purge fixture + user's real
+  apt uninstalls of wechat/wps-office), interactive pickers + live status loop (pty tests + real use),
+  and snap/flatpak removal via stubbed `snap`/`flatpak`/`sudo` binaries on PATH: correct commands
+  invoked (`snap remove <id>`, `flatpak uninstall -y <id>` as user), leftovers (incl. `~/snap/<id>`,
+  `~/.var/app/<id>`) found and deleted. Real snap dry-run against installed snaps also verified.
+  Still never run: a real `sudo snap remove` end-to-end (needs interactive sudo; mocked only).
