@@ -21,10 +21,20 @@ journal steps automatically.
 
 Routers don't have bash, so `lite/mo-lite` is a self-contained POSIX-sh subset
 (BusyBox-compatible): `clean` (opkg lists, LuCI caches, stray .ipk, rotated logs),
-`analyze`, `status`. Install by copying the single file:
+`analyze`, `status`. It's one file, so installing is one line — on the router:
 
 ```bash
-scp lite/mo-lite root@router:/usr/bin/mo-lite
+wget -O /usr/bin/mo-lite https://raw.githubusercontent.com/ccyisafool/mole-for-ubuntu-and-friends/main/lite/mo-lite && chmod +x /usr/bin/mo-lite
+```
+
+(Needs HTTPS-capable wget — stock on modern OpenWrt/iStoreOS; minimal builds may
+need `opkg install libustream-openssl ca-bundle` first. Re-run the same line to update.)
+
+If the router can't reach GitHub, push it over SSH from any machine with a clone —
+works even when the router has no scp/sftp installed:
+
+```bash
+cat lite/mo-lite | ssh root@<router-ip> 'cat > /usr/bin/mo-lite && chmod +x /usr/bin/mo-lite'
 ```
 
 ![mo in action: launcher menu and live status dashboard](demo.gif)
