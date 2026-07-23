@@ -66,18 +66,22 @@ run_clean() {
   # ---- System (sudo) --------------------------------------------------------
   if (( ! user_only )); then
     section "System caches & logs ${C_DIM}(sudo)${C_RESET}"
-    local apt_sz journal_usage
-    apt_sz=$(path_size /var/cache/apt/archives)
-    journal_usage=$(journalctl --disk-usage 2>/dev/null | grep -oE '[0-9.]+[KMGTP]?i?B?' | tail -1)
-    info "APT package cache:        $(human_size "$apt_sz")"
-    info "systemd journal:          ${journal_usage:-unknown}"
+    local pkg_sz=0 journal_usage=""
+    if [[ $PKG_FAMILY != none ]]; then
+      pkg_sz=$(path_size "$(pkg_cache_path)")
+      info "$PKG_TOOL package cache:      $(human_size "$pkg_sz")"
+    fi
+    if have journalctl; then
+      journal_usage=$(journalctl --disk-usage 2>/dev/null | grep -oE '[0-9.]+[KMGTP]?i?B?' | tail -1)
+      info "systemd journal:          ${journal_usage:-unknown}"
+    fi
     info "rotated logs in /var/log: *.gz, *.old, *.1 ..."
     if confirm_or_dry "Clean system caches, old journal entries (>7d) and rotated logs?"; then
-      run_root apt-get clean
-      run_root journalctl --vacuum-time=7d
+      [[ $PKG_FAMILY != none ]] && pkg_clean_cache
+      have journalctl && run_root journalctl --vacuum-time=7d
       run_root find /var/log -xdev -type f \
         \( -name '*.gz' -o -name '*.old' -o -name '*.[0-9]' \) -delete
-      TOTAL_FREED=$((TOTAL_FREED + apt_sz))
+      TOTAL_FREED=$((TOTAL_FREED + pkg_sz))
     else
       info "skipped"
     fi

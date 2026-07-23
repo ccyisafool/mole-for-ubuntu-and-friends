@@ -5,6 +5,10 @@ set -o pipefail
 MOLE_HOME="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 # shellcheck source=lib/core.sh
 source "$MOLE_HOME/lib/core.sh"
+# shellcheck source=lib/distro.sh
+source "$MOLE_HOME/lib/distro.sh"
+# shellcheck source=lib/pkg.sh
+source "$MOLE_HOME/lib/pkg.sh"
 
 usage() {
   cat <<EOF

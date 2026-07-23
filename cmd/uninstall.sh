@@ -34,9 +34,11 @@ run_uninstall() {
       [[ -n $app ]] && entries+=("flatpak"$'\t'"$app"$'\t'"${disp:-$app}")
     done < <(flatpak list --app --columns=application,name 2>/dev/null)
   fi
-  while read -r name; do
-    [[ -n $name ]] && entries+=("apt"$'\t'"$name"$'\t'"$name")
-  done < <(apt-mark showmanual 2>/dev/null | sort)
+  if [[ $PKG_FAMILY != none ]]; then
+    while read -r name; do
+      [[ -n $name ]] && entries+=("$PKG_TOOL"$'\t'"$name"$'\t'"$name")
+    done < <(pkg_list_manual)
+  fi
 
   (( ${#entries[@]} )) || { err "no installed packages found"; return 1; }
 
@@ -99,30 +101,28 @@ run_uninstall() {
   confirm_or_dry "Remove $id via $src?" || { info "cancelled"; return 0; }
 
   case "$src" in
-    apt)
-      run_root apt-get remove --purge -y "$id"
-      run_root apt-get autoremove --purge -y
-      ;;
     snap)
       run_root snap remove "$id"
       ;;
     flatpak)
       run_user flatpak uninstall -y "$id"
       ;;
+    *)  # native package manager (apt/dnf/pacman)
+      pkg_remove "$id"
+      pkg_autoremove
+      ;;
   esac
 
   # ---- leftovers ------------------------------------------------------------
   local names=("$id")
   case "$src" in
-    apt)
-      local stripped="${id%-stable}"; stripped="${stripped%-bin}"; stripped="${stripped%-app}"
-      [[ $stripped != "$id" ]] && names+=("$stripped")
-      ;;
     flatpak)
       names+=("${id##*.}")   # org.gimp.GIMP -> GIMP
       ;;
-    snap)
-      names+=()
+    snap) ;;
+    *)
+      local stripped="${id%-stable}"; stripped="${stripped%-bin}"; stripped="${stripped%-app}"
+      [[ $stripped != "$id" ]] && names+=("$stripped")
       ;;
   esac
 

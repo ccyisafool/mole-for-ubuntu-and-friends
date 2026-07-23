@@ -4,17 +4,21 @@
 run_optimize() {
   printf '%s\n' "${C_BOLD}mo optimize${C_RESET} — refreshing system$( (( DRY_RUN )) && printf ' %s' "${C_YELLOW}(dry run)${C_RESET}")"
 
-  section "Package system ${C_DIM}(sudo)${C_RESET}"
-  if confirm_or_dry "Remove packages nothing depends on anymore (apt autoremove)?"; then
-    run_root apt-get autoremove --purge -y && done_ok "autoremove done"
-  fi
-  if confirm_or_dry "Drop obsolete packages from APT cache (apt autoclean)?"; then
-    run_root apt-get autoclean -y && done_ok "autoclean done"
+  if [[ $PKG_FAMILY != none ]]; then
+    section "Package system ${C_DIM}(sudo, via $PKG_TOOL)${C_RESET}"
+    if confirm_or_dry "Remove packages nothing depends on anymore ($PKG_TOOL autoremove)?"; then
+      pkg_autoremove && done_ok "autoremove done"
+    fi
+    if confirm_or_dry "Drop obsolete packages from the $PKG_TOOL cache?"; then
+      pkg_autoclean && done_ok "autoclean done"
+    fi
   fi
 
-  section "Journal ${C_DIM}(sudo)${C_RESET}"
-  if confirm_or_dry "Trim systemd journal to the last 7 days?"; then
-    run_root journalctl --vacuum-time=7d && done_ok "journal trimmed"
+  if have journalctl; then
+    section "Journal ${C_DIM}(sudo)${C_RESET}"
+    if confirm_or_dry "Trim systemd journal to the last 7 days?"; then
+      run_root journalctl --vacuum-time=7d && done_ok "journal trimmed"
+    fi
   fi
 
   section "SSD / storage ${C_DIM}(sudo)${C_RESET}"

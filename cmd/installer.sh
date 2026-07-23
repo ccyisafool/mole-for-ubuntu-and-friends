@@ -65,18 +65,20 @@ run_installer() {
     fi
   fi
 
-  # APT downloaded package archives
-  section "APT downloaded packages ${C_DIM}(sudo)${C_RESET}"
-  local apt_sz
-  apt_sz=$(path_size /var/cache/apt/archives)
-  if (( apt_sz > 100 * 1024 )); then
-    info "cached .deb archives: $(human_size "$apt_sz")"
-    if confirm_or_dry "Clear APT package cache?"; then
-      run_root apt-get clean
-      TOTAL_FREED=$((TOTAL_FREED + apt_sz))
+  # downloaded package archives kept by the package manager
+  if [[ $PKG_FAMILY != none ]]; then
+    section "$PKG_TOOL downloaded packages ${C_DIM}(sudo)${C_RESET}"
+    local pkg_sz
+    pkg_sz=$(path_size "$(pkg_cache_path)")
+    if (( pkg_sz > 100 * 1024 )); then
+      info "cached package archives: $(human_size "$pkg_sz")"
+      if confirm_or_dry "Clear the $PKG_TOOL package cache?"; then
+        pkg_clean_cache
+        TOTAL_FREED=$((TOTAL_FREED + pkg_sz))
+      fi
+    else
+      info "${C_DIM}$PKG_TOOL cache already clean${C_RESET}"
     fi
-  else
-    info "${C_DIM}APT cache already clean${C_RESET}"
   fi
 
   freed_summary
