@@ -34,13 +34,13 @@ scp lite/mo-lite root@router:/usr/bin/mo-lite
 One-liner (downloads to `~/.local/share/mole-ubuntu`, links `mo` into `~/.local/bin`):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ccyisafool/mole_ubuntu/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/ccyisafool/mole-for-ubuntu-and-friends/main/install.sh | bash
 ```
 
 Or from a clone (symlinks the checkout, so edits take effect immediately):
 
 ```bash
-git clone https://github.com/ccyisafool/mole_ubuntu.git && cd mole_ubuntu
+git clone https://github.com/ccyisafool/mole-for-ubuntu-and-friends.git && cd mole-for-ubuntu-and-friends
 ./install.sh
 ```
 

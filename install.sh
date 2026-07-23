@@ -2,13 +2,13 @@
 # Install mo (Mole for Ubuntu).
 #
 # One-liner (no clone needed):
-#   curl -fsSL https://raw.githubusercontent.com/ccyisafool/mole_ubuntu/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/ccyisafool/mole-for-ubuntu-and-friends/main/install.sh | bash
 #
 # From a git checkout:   ./install.sh        (symlinks the checkout, live-editable)
 # Uninstall:             ./install.sh --uninstall
 set -euo pipefail
 
-REPO="ccyisafool/mole_ubuntu"
+REPO="ccyisafool/mole-for-ubuntu-and-friends"
 INSTALL_DIR="${MOLE_INSTALL_DIR:-$HOME/.local/share/mole-ubuntu}"
 BIN_DIR="${MOLE_BIN_DIR:-$HOME/.local/bin}"
 

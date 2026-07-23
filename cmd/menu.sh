@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # mo (no command) — interactive launcher menu
 
-MENU_REPO="ccyisafool/mole_ubuntu"
+MENU_REPO="ccyisafool/mole-for-ubuntu-and-friends"
 
 # print cached latest-version instantly; refresh the cache in the background
 # so the menu never waits on the network (notice shows from the next launch on)

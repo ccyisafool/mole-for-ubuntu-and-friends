@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # mo update — update mole itself (git pull for checkouts, tarball refresh otherwise)
 
-MOLE_REPO="ccyisafool/mole_ubuntu"
+MOLE_REPO="ccyisafool/mole-for-ubuntu-and-friends"
 
 _remote_version() {
   curl -fsSL -m 10 "https://raw.githubusercontent.com/$MOLE_REPO/main/lib/core.sh" 2>/dev/null \
