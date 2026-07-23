@@ -49,6 +49,12 @@ run_uninstall() {
       [[ ${e,,} == *"${query,,}"* ]] && matches+=("$e")
     done
     (( ${#matches[@]} )) || { err "nothing installed matches '$query'"; return 1; }
+    # an exact package-id match beats substring matches (makes `mo uninstall foo --yes` scriptable)
+    if (( ${#matches[@]} > 1 )); then
+      for e in "${matches[@]}"; do
+        if [[ $(cut -f2 <<<"$e") == "$query" ]]; then matches=("$e"); break; fi
+      done
+    fi
   else
     matches=("${entries[@]}")
   fi
