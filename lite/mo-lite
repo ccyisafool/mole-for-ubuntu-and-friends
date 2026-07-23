@@ -3,7 +3,7 @@
 # POSIX sh only: no arrays, no [[, works under BusyBox ash.
 # Commands: clean, analyze [path], status.  Flags: -n dry-run, -y yes.
 
-VERSION="0.4.4"
+VERSION="0.4.5"
 DRY=0
 YES=0
 NAME=${0##*/}
@@ -249,6 +249,10 @@ do_update() {
   chmod +x "$tmp"
   if mv "$tmp" "$self" 2>/dev/null; then
     printf '  %s✓%s updated %sv%s → v%s%s\n' "$GRN" "$R" "$B" "$VERSION" "${new:-?}" "$R"
+    if [ "$NAME" = "mo-lite" ]; then
+      printf '  %stip: prefer the short name?  mv %s %s/mo%s\n' \
+        "$D" "$self" "$(dirname "$self")" "$R"
+    fi
     exit 0
   fi
   rm -f "$tmp"
