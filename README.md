@@ -68,7 +68,7 @@ mo --help
 
 | Command        | What it does                                                                 |
 | -------------- | ---------------------------------------------------------------------------- |
-| `mo clean`     | Trash, thumbnails, browser caches, dev-tool caches, APT cache, journal, rotated logs, old snap revisions & saved snapshots, flatpak caches & unused runtimes |
+| `mo clean`     | Trash, thumbnails, browser caches, dev-tool caches, APT cache, journal, rotated logs, old snap revisions & saved snapshots, flatpak caches & unused runtimes, Docker/Podman dangling images & build cache (stopped containers listed & confirmed separately; `--deep` adds unused images; volumes never touched) |
 | `mo uninstall` | Remove an app via apt / snap / flatpak, then hunt down leftover config, cache, autostart entries and systemd user units |
 | `mo optimize`  | `apt autoremove`/`autoclean`, journal trim, `fstrim`, `updatedb`, `mandb`, font & launcher caches |
 | `mo analyze`   | Interactive disk-usage explorer with size bars (drill down, go up)           |
@@ -101,7 +101,11 @@ mo status --once            # one snapshot instead of a live dashboard
 - **Protected paths** — `mo` refuses to delete anything outside `$HOME`, and never
   deletes `~/Documents`, `~/Pictures`, `~/.ssh`, `~/.gnupg`, top-level XDG dirs, etc.
   System-level cleaning goes through the proper tools (`apt-get clean`, `journalctl
-  --vacuum-time`, `snap remove --revision`) rather than raw deletion.
+  --vacuum-time`, `snap remove --revision`, `docker … prune`) rather than raw deletion.
+- **Container data** — Docker/Podman cleaning only removes what rebuilds itself
+  (dangling images, build cache) by default; stopped containers get their own
+  listing and confirmation, unused images require `--deep`, and volumes are
+  never deleted — only reported.
 - **Whitelist** — paths listed in `~/.config/mole/whitelist` (one per line, `~` allowed,
   `#` comments) are never touched.
 - **Operation log** — every removal and system command is appended to

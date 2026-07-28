@@ -1,6 +1,103 @@
 #!/usr/bin/env bash
 # mo clean — remove caches, logs and temporary files
 
+# ---- container engines (docker / podman) ------------------------------------
+# Everything goes through the engine's own CLI — mole never touches
+# /var/lib/docker or friends directly, and volumes are never deleted.
+
+# engine size strings ("1.084GB", "88.4MiB", "4.096kB") -> bytes
+_ce_bytes() {
+  awk -v s="$1" 'BEGIN{
+    n = s + 0; u = s; gsub(/[0-9. ]/, "", u)
+    m = 1
+    if (u=="kB"||u=="KB") m=1000; else if (u=="MB") m=1000^2
+    else if (u=="GB") m=1000^3;   else if (u=="TB") m=1000^4
+    else if (u=="KiB") m=1024;    else if (u=="MiB") m=1024^2
+    else if (u=="GiB") m=1024^3;  else if (u=="TiB") m=1024^4
+    printf "%d", n * m
+  }'
+}
+
+# run one prune through the engine CLI, honoring dry-run; credits freed bytes
+_ce_prune() {
+  local ce=$1; shift
+  if (( DRY_RUN )); then
+    info "${C_DIM}[dry-run]${C_RESET} would run: $ce $*"
+    return 0
+  fi
+  local out sz
+  if ! out=$("$ce" "$@" 2>&1); then
+    warn "$ce $* failed: $(tail -1 <<<"$out")"
+    return 1
+  fi
+  log_op "ran: $ce $*"
+  sz=$(grep -oE '(Total reclaimed space:|Total:)[[:space:]]*[0-9.]+[[:space:]]?[KMGTk]?i?B' <<<"$out" \
+       | grep -oE '[0-9.]+[[:space:]]?[KMGTk]?i?B' | tail -1)
+  if [[ -n $sz && $sz != 0B ]]; then
+    TOTAL_FREED=$(( TOTAL_FREED + $(_ce_bytes "$sz") ))
+    ok "$ce $1 $2: reclaimed $sz"
+  else
+    ok "$ce $1 $2: nothing to reclaim"
+  fi
+}
+
+_clean_container_engine() {
+  local ce=$1 deep=$2
+  section "${ce^} ${C_DIM}(via $ce CLI — volumes are never touched)${C_RESET}"
+  if ! "$ce" system df >/dev/null 2>&1; then
+    info "${C_DIM}installed, but not reachable as $USER — skipping${C_RESET}"
+    [[ $ce == docker ]] && (( EUID != 0 )) && \
+      info "${C_DIM}fix: sudo usermod -aG docker $USER  (then log out and back in)${C_RESET}"
+    return 0
+  fi
+
+  local line
+  "$ce" system df 2>/dev/null | while IFS= read -r line; do info "$line"; done
+
+  # dangling images + build cache: pure garbage, rebuilt on demand
+  if confirm_or_dry "Prune dangling images and build cache? (recreated on next build)"; then
+    _ce_prune "$ce" image prune -f
+    "$ce" builder prune --help >/dev/null 2>&1 && _ce_prune "$ce" builder prune -f
+  else
+    info "skipped"
+  fi
+
+  # stopped containers lose their writable layer — listed and confirmed separately
+  local stopped
+  stopped=$("$ce" ps -a --filter status=exited --filter status=created --filter status=dead \
+              --format '{{.Names}}\t{{.Status}}\t{{.Image}}' 2>/dev/null)
+  if [[ -n $stopped ]]; then
+    info "stopped containers ${C_YELLOW}(removal loses files changed inside them)${C_RESET}:"
+    local nm st im
+    while IFS=$'\t' read -r nm st im; do
+      info "  $nm  ${C_DIM}$st — $im${C_RESET}"
+    done <<<"$stopped"
+    if confirm_or_dry "Remove ALL stopped containers listed above?"; then
+      _ce_prune "$ce" container prune -f
+    else
+      info "skipped"
+    fi
+  else
+    info "${C_DIM}no stopped containers${C_RESET}"
+  fi
+
+  # unused images: only under --deep; re-pullable but potentially large downloads
+  if (( deep )); then
+    if confirm_or_dry "Deep: remove ALL images not used by any container? (re-pull to restore)"; then
+      _ce_prune "$ce" image prune -a -f
+    else
+      info "skipped"
+    fi
+  fi
+
+  # volumes hold real data (databases!) — report only, never delete
+  local vols
+  vols=$("$ce" volume ls -q 2>/dev/null | grep -c .)
+  (( vols > 0 )) && \
+    info "${C_DIM}$vols volume(s) present — mo never deletes volumes; inspect with: $ce volume ls${C_RESET}"
+  return 0
+}
+
 run_clean() {
   local deep=0 user_only=0 arg
   for arg in "$@"; do
@@ -152,6 +249,12 @@ run_clean() {
       run_user flatpak uninstall --unused -y
     fi
   fi
+
+  # ---- Docker / Podman ------------------------------------------------------
+  local ce
+  for ce in docker podman; do
+    have "$ce" && _clean_container_engine "$ce" "$deep"
+  done
 
   freed_summary
   info "${C_DIM}operation log: ${MOLE_LOG/#$HOME/\~}${C_RESET}"
