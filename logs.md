@@ -8,6 +8,16 @@
 
 ## Entries
 
+- **2026-10-18 02:40 — contributor PR (iamgerwin)**
+  - Did: Added fish shell support to the installer. On Ubuntu, fish doesn't read `~/.profile`, so
+    `~/.local/bin` isn't on its PATH and `mo` was "command not found" after install; the old PATH
+    hint also printed bash syntax. `install.sh` now (when fish is present) writes
+    `~/.config/fish/conf.d/mole.fish` to add the bin dir to PATH and symlinks
+    `completions/mo.fish` into `~/.config/fish/completions/`; `--uninstall` removes both.
+    Verified in a throwaway `$HOME` with fish 4.2.1: `bash -n`/`fish -n` clean, `mo` resolves,
+    command + per-command option completions work, uninstall leaves nothing behind.
+  - Changed: `install.sh`, `completions/mo.fish` (new), `README.md` (install + layout), `logs.md` (this entry).
+
 - **2026-07-22 12:45 — main session (kimi-code CLI)**
   - Did: Fixed invisible confirmation prompts (the "optimize/uninstall do nothing" bug). Replaced
     `read -p "..." VAR 2>/dev/null </dev/tty` with `printf` for the prompt + `read -r VAR 2>/dev/null </dev/tty`
