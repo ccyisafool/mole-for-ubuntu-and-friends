@@ -58,6 +58,13 @@ git clone https://github.com/ccyisafool/mole-for-ubuntu-and-friends.git && cd mo
 ./install.sh
 ```
 
+**fish shell:** fish doesn't read `~/.profile`, so on Ubuntu `~/.local/bin` is
+usually not on its PATH. When fish is installed, `install.sh` also writes
+`~/.config/fish/conf.d/mole.fish` (adds the bin dir to PATH) and links tab
+completions to `~/.config/fish/completions/mo.fish`. Open a new fish session (or
+`source ~/.config/fish/conf.d/mole.fish`) and `mo` is ready. The one-liner works
+as-is from fish since it pipes to `bash`. `install.sh --uninstall` removes both files.
+
 Update any time with `mo update`. Uninstall: `install.sh --uninstall`. Then:
 
 ```bash
@@ -131,5 +138,6 @@ released under MIT). If you're on macOS, use the original — it's more mature.
 mo               entry point / dispatcher
 lib/core.sh      colors, logging, sizes, confirmations, protected-path checks, safe_rm
 cmd/<name>.sh    one file per command (clean, uninstall, optimize, analyze, status, purge, installer)
+completions/     shell completions (mo.fish)
 install.sh       symlink installer
 ```

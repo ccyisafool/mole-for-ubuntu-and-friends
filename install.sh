@@ -11,11 +11,18 @@ set -euo pipefail
 REPO="ccyisafool/mole-for-ubuntu-and-friends"
 INSTALL_DIR="${MOLE_INSTALL_DIR:-$HOME/.local/share/mole-ubuntu}"
 BIN_DIR="${MOLE_BIN_DIR:-$HOME/.local/bin}"
+FISH_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/fish"
 
 if [[ "${1:-}" == "--uninstall" ]]; then
   rm -f "$BIN_DIR/mo"
   rm -rf "$INSTALL_DIR"
   echo "Removed $BIN_DIR/mo and $INSTALL_DIR"
+  for f in "$FISH_DIR/completions/mo.fish" "$FISH_DIR/conf.d/mole.fish"; do
+    if [[ -L $f ]] || { [[ -f $f ]] && grep -q 'mole-for-ubuntu' "$f"; }; then
+      rm -f "$f"
+      echo "Removed $f"
+    fi
+  done
   echo "(config in ~/.config/mole and logs in ~/.local/state/mole were kept)"
   exit 0
 fi
@@ -42,8 +49,29 @@ mkdir -p "$BIN_DIR"
 ln -sf "$src/mo" "$BIN_DIR/mo"
 
 echo "Installed: $BIN_DIR/mo -> $src/mo"
+
+# fish doesn't read ~/.profile, so on Ubuntu ~/.local/bin is usually missing
+# from its PATH. Drop a conf.d snippet for PATH and link the completions.
+if command -v fish >/dev/null 2>&1 || [[ -d $FISH_DIR ]]; then
+  mkdir -p "$FISH_DIR/conf.d" "$FISH_DIR/completions"
+  cat >"$FISH_DIR/conf.d/mole.fish" <<EOF
+# Added by mole-for-ubuntu install.sh: puts mo on PATH. Removed by install.sh --uninstall.
+if test -d "$BIN_DIR"; and not contains -- "$BIN_DIR" \$PATH
+    set -gx PATH "$BIN_DIR" \$PATH
+end
+EOF
+  ln -sf "$src/completions/mo.fish" "$FISH_DIR/completions/mo.fish"
+  echo "fish: PATH snippet in $FISH_DIR/conf.d/mole.fish, completions in $FISH_DIR/completions/mo.fish"
+  echo "      (open a new fish session, or run:  source $FISH_DIR/conf.d/mole.fish)"
+fi
+
 case ":$PATH:" in
   *:"$BIN_DIR":*) ;;
-  *) echo "NOTE: $BIN_DIR is not on your PATH. Add:  export PATH=\"$BIN_DIR:\$PATH\"" ;;
+  *)
+    # fish users are covered by the conf.d snippet above
+    if [[ $(basename "${SHELL:-}") != fish ]]; then
+      echo "NOTE: $BIN_DIR is not on your PATH. Add:  export PATH=\"$BIN_DIR:\$PATH\""
+    fi
+    ;;
 esac
 echo "Try: mo --help"
